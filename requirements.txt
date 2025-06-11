@@ -1,0 +1,3 @@
+einops
+scikit-learn
+networkx==2.2

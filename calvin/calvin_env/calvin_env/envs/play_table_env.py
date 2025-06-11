@@ -26,12 +26,13 @@ log = logging.getLogger(__name__)
 
 from omegaconf import OmegaConf
 
-from BulletRecorder import PyBulletRecorder
+# from BulletRecorder import PyBulletRecorder
 
-RECORDING = False
-recorder = None 
-if RECORDING:
-    recorder = PyBulletRecorder("frames.pkl")
+# RECORDING = False
+# recorder = None 
+# if RECORDING:
+#     recorder = PyBulletRecorder("frames.pkl")
+recorder = None # for recording for rendering; not included in this release. Let me know if you want this feature. 
 
 class PlayTableSimEnv(gym.Env):
     def __init__(
@@ -50,6 +51,7 @@ class PlayTableSimEnv(gym.Env):
         recording_path = None
     ):
         # make this code robust to dictionary initializations 
+        del cameras["tactile"] # we don't need this 
         if isinstance(robot_cfg, dict):
             robot_cfg = OmegaConf.create(robot_cfg)
         if isinstance(cameras, dict):

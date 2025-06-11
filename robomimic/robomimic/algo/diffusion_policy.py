@@ -44,9 +44,6 @@ def algo_config_to_class(algo_config):
         raise RuntimeError()
 
 class DiffusionPolicyUNet(PolicyAlgo):
-    def set_operation_mode(self, mode):
-        self.mode = mode if mode in ["vanilla", "diffusion", "rejection", "direct"] else "vanilla" 
-
     def _create_networks(self):
         """
         Creates networks and places them into @self.nets.
@@ -268,9 +265,8 @@ class DiffusionPolicyUNet(PolicyAlgo):
         To = self.algo_config.horizon.observation_horizon
         Ta = self.algo_config.horizon.action_horizon
         obs_queue = deque(maxlen=To)
-        print("IM MESSING WITH THE SAMPLING IN RESET()")
         # action_queue = deque(maxlen=Ta)
-        action_queue = deque(maxlen=14)
+        action_queue = deque(maxlen=14) # HACK: a slightly longer chunk can help with guidance 
         self.obs_queue = obs_queue
         self.action_queue = action_queue
     
@@ -311,13 +307,11 @@ class DiffusionPolicyUNet(PolicyAlgo):
             if guidance_function is not None:
                 if guidance_type == "diffusion":
                     action_sequence = self._get_action_trajectory_guidance(obs_dict=obs_dict, goal_dict = goal_dict, guidance_function = guidance_function, ss = ss)
-                elif guidance_type == "gradient":
-                    print('direct opt!')
+                elif guidance_type == "gradient": # direct action optimization; not evaluated in the paper experiments 
                     action_sequence = self._get_action_trajectory_directopt(obs_dict=obs_dict, goal_dict = goal_dict, guidance_function = guidance_function)
                 else:
                     raise Exception("Invalid guidance type")
             else:
-                print("For rejection sampling, I shouldn't be here!")
                 action_sequence = self._get_action_trajectory(obs_dict=obs_dict, goal_dict = goal_dict)
             
             # put actions into the queue
@@ -338,8 +332,7 @@ class DiffusionPolicyUNet(PolicyAlgo):
         self.action_queue.extend(action_sequence)
 
     def get_full_action(self, obs_dict, goal_dict=None, crop = False):
-        # this function gives you full access to the action generation for rejection sampling purporses 
-        # print("resampling! Shoudl be very step")
+        # this function gives you full access to the action generation for sampling baseline purposes 
         assert not self.nets.training
         To = self.algo_config.horizon.observation_horizon
         Ta = self.algo_config.horizon.action_horizon
@@ -410,14 +403,13 @@ class DiffusionPolicyUNet(PolicyAlgo):
             return action
         return naction
 
-    def _get_action_trajectory(self, obs_dict, goal_dict=None, guidance_function = None):
-        # print("resampling! Shoudl be very step")
-        print("RESAMPLING!!")
+    def _get_action_trajectory(self, obs_dict, goal_dict=None): 
+        """
+        This function is the normal diffusion policy 
+        """
         assert not self.nets.training
         To = self.algo_config.horizon.observation_horizon
         Ta = self.algo_config.horizon.action_horizon
-        # FOR DEBUGGING ONLY: 
-        # Ta = 1 
         self.corrections_list = list() # this is for visualizing the correcitons 
         self.guidance_list = list() 
         self.before_list = list()
@@ -462,7 +454,6 @@ class DiffusionPolicyUNet(PolicyAlgo):
         
         # init scheduler
         self.noise_scheduler.set_timesteps(num_inference_timesteps)
-        print("I AM NO LONGER DOING GUIDANCE. PLEASE ENABLE ME.")
 
         for k in self.noise_scheduler.timesteps:
             # predict noise
@@ -486,9 +477,6 @@ class DiffusionPolicyUNet(PolicyAlgo):
         return action
 
     def _get_action_trajectory_directopt(self, obs_dict, goal_dict=None, guidance_function = None):
-        # print("resampling! Shoudl be very step")
-        print("RESAMPLING!!")
-        print("THIS IS DIRECT ACTION OPTIMIZATION")
         assert not self.nets.training
         To = self.algo_config.horizon.observation_horizon
         Ta = self.algo_config.horizon.action_horizon
@@ -554,12 +542,7 @@ class DiffusionPolicyUNet(PolicyAlgo):
 
             self.before_list.append(naction.clone())
 
-        # fixed_naction = torch.zeros_like(naction)
-        # fixed_naction[:, 0:15] = naction[:, 1:]
-        # fixed_naction[:, -1] = naction[:, -1] # HACK but just want to see if it works 
-        # naction = fixed_naction 
         before = naction.clone()
-        # run til convergence 
        
         for i in range(50): # prevents overstepping 
             state = inputs["obs"]
@@ -571,14 +554,12 @@ class DiffusionPolicyUNet(PolicyAlgo):
             scaled_guidance = 0.005 * guidance
             self.guidance_list.append(scaled_guidance)
             naction += scaled_guidance
-            # TODO: rescale all action deltas by the largest point, limit to certain size to prevent divergence 
             if torch.norm(scaled_guidance).item() < 0.005:
-            # if torch.norm(scaled_guidance).item() < 0.002:
                 break 
        
         self.corrections_list.append(naction.clone())
 
-        # TODO: not true for all environments 
+        # HACK: not true for all environments 
         naction = torch.clip(naction, -0.95, 0.95)
         # print(naction - before)
 
@@ -591,15 +572,12 @@ class DiffusionPolicyUNet(PolicyAlgo):
     
 
     def _get_action_trajectory_guidance(self, obs_dict, goal_dict=None, guidance_function = None, ss = 4):
-        # print("resampling! Shoudl be very step")
-        print("RESAMPLING!!")
-        # M = 4 # set to 1 for normal gradient guidance 
-
+        """
+        This is the function that allows guidance during diffusion process
+        """
         assert not self.nets.training
         To = self.algo_config.horizon.observation_horizon
         Ta = self.algo_config.horizon.action_horizon
-        # FOR DEBUGGING ONLY: 
-        # Ta = 1 
         self.corrections_list = list() # this is for visualizing the correcitons 
         self.guidance_list = list() 
         self.diffusion_list = list() # this is the direction of non-guidance forces 
@@ -643,7 +621,6 @@ class DiffusionPolicyUNet(PolicyAlgo):
         
         # init scheduler
         self.noise_scheduler.set_timesteps(num_inference_timesteps)
-        print("THIS IS DIFFUSION GUIDANCE")
         naction.requires_grad = True
         for k in tqdm.tqdm(self.noise_scheduler.timesteps):
             # print(k)
@@ -678,7 +655,7 @@ class DiffusionPolicyUNet(PolicyAlgo):
 
         # process action using Ta
         start = To - 1
-        Ta = 14 # FOR THE OLDER SETUP IT NEEDED LONGER CHUNKS
+        Ta = 14 # HACK: use longer chunks for slightly better performance, although not necessary by any means 
         end = start + Ta
         action = naction[:,start:end]
         return action

@@ -28,10 +28,10 @@ from robomimic.algo import RolloutPolicy
 from robomimic.scripts.playback_dataset import DEFAULT_CAMERAS
 import io 
 
-from embedder_models import FinalStateClassification
-from image_models import VAE
+from core.dynamics_models import FinalStateClassification
+from core.image_models import VAE
 
-from embedder_datasets import MultiviewDataset
+from core.embedder_datasets import MultiviewDataset
 import cv2 
 import matplotlib.pyplot as plt 
 
@@ -231,12 +231,6 @@ def visualize_corrections(samples_list, corrections_list, diffusion_list, state,
     for i, action in enumerate(samples_list):
         if i < 5:
             continue 
-        # if (i+1) % to_skip != 0: # or i == 0: #skip the first sample 
-        #     continue 
-        # print(i)
-        # print(i, len(samples_list))
-        # print(plot_count)
-        # ax = axs[plot_count // 5, plot_count % 5] 
         ax = axs[plot_count] 
         ax.set_xticks([])
         ax.set_yticks([])
@@ -248,17 +242,6 @@ def visualize_corrections(samples_list, corrections_list, diffusion_list, state,
 
         # ax.scatter(action[:, 0], action[:, 1], zorder = 2, color = color_list, s = 15)
         ax.scatter(action[:, 0], action[:, 1], zorder = 2, color = "black", s = 15)
-
-        # for target, weight in enumerate(target_list):
-        #     cube_state = state["states"][-1][target * 2 : target * 2 + 2]
-        #     if weight > 0:
-        #         color = "red"
-        #     elif weight == 0:
-        #         color = "gray"
-        #     else:
-        #         color = "black"
-        #     ax.scatter((cube_state[0],), (cube_state[1],), color = color, s = 40)
-
         # ax.scatter((current_xy[0],), (current_xy[1],), color = "orange", s = 40, zorder = 10)
         corrections = corrections_list[i].detach().cpu().numpy()[0]
         diffusion = diffusion_list[i].detach().cpu().numpy()[0]
@@ -307,10 +290,6 @@ def visualize_corrections(samples_list, corrections_list, diffusion_list, state,
     color_list = ["blue" if i < 8 else "cyan" for i in range(action.shape[0])]
     plt.imshow(np.flipud(np.transpose(state["image"][-1], (1, 2, 0))), extent = [-1, 1, -1, 1]) #flip ud important for the matplotlib quirk 
     plt.scatter(action[:, 0], action[:, 1], zorder = 2, color = color_list, s = 15)
-
-    # for target, weight in enumerate(target_list):
-    #     cube_state = state["states"][-1][target * 2 : target * 2 + 2]
-    #     ax.scatter((cube_state[0],), (cube_state[1],), color = "red" if weight > 0 else "black", s = 40)
 
     plt.scatter((current_xy[0],), (current_xy[1],), color = "magenta", s = 40, zorder = 10)
     corrections = corrections_list[-1].detach().cpu().numpy()[0]
@@ -872,7 +851,7 @@ if __name__ == "__main__":
         "--target_list",
         type=list_of_floats,
         default=None,
-        help="What we should do to the target",
+        help="specifying the target color",
     )
 
 
@@ -890,7 +869,7 @@ if __name__ == "__main__":
         "--output_folder",
         type=str,
         default=None,
-        help="(optional) dump a json of the rollout results stats to the specified path",
+        help="",
     )
 
 

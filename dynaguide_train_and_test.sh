@@ -10,31 +10,6 @@ cleanup() {
 # Trap Ctrl+C (SIGINT) and call cleanup function
 trap cleanup SIGINT 
 
-# run_name=TestName
-# output_folder=youroutputfolder/$run_name
-# checkpoint_dir=path_to_base_policy
-# exp_setup_config=path_to_setup_configs/switch_off.json
-# embedder=path_to_dynamics_model
-# CUDA_VISIBLE_DEVICES=0 python run_dynaguide.py  --video_path $output_folder/$run_name.mp4 \
-#     --dataset_path $output_folder/$run_name.hdf5 --dataset_obs --json_path $output_folder/$run_name.json --horizon 400 --n_rollouts 100 \
-#     --agent $checkpoint_dir --output_folder $output_folder --video_skip 2  \
-#     --exp_setup_config $exp_setup_config --guidance $embedder --camera_names third_person --scale 1 --save_frames
-
-# experiment_name=TestName
-# CUDA_VISIBLE_DEVICES=1 python train_dynaguide.py --exp_dir results/dynamics_models/$experiment_name/ \
-#     --train_hdf5 path_to_train_data  \
-#     --test_hdf5 path_to_test_data \
-#     --cameras third_person --action_dim 7 --proprio_key proprio --proprio_dim 15 \
-#     --num_epochs 6000 --action_chunk_length 16 --batch_size 16 
-
-# experiment_name=name_of_trained_dynamics_model
-# checkpoint=3000
-# CUDA_VISIBLE_DEVICES=7 python test_dynaguide_embedding.py --exp_dir path_to_experiment_directory/$experiment_name/ \
-#     --good_hdf5 path_to_desired_behavior_dataset  \
-#     --mixed_hdf5 path_to_labeled_test_set  \
-#     --checkpoint path_to_dynamics_model_directory$experiment_name/$checkpoint.pth  \
-#     --action_chunk_length 16 --key button_off 
-
 
 # Train base policy 
 
@@ -65,4 +40,27 @@ CUDA_VISIBLE_DEVICES=0 python run_dynaguide.py  --video_path $output_folder/$run
     --dataset_path $output_folder/$run_name.hdf5 --dataset_obs --json_path $output_folder/$run_name.json --horizon 400 --n_rollouts 100 \
     --agent $checkpoint_dir --output_folder $output_folder --video_skip 2  \
     --exp_setup_config $exp_setup_config --guidance $embedder --camera_names third_person --scale 1.5 --ss 4 --alpha 30 --save_frames
+
+
+# run_name=pymunk_touch_res128_largercubes_repeated_100ktrain
+# output_folder=/store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/$run_name
+# python collect_scripted_data_pymunk.py --video_path $output_folder/$run_name.mp4 \
+#     --dataset_path $output_folder/data.hdf5 --dataset_obs --json_path $output_folder/config.json --horizon 150 --n_rollouts 100000 \
+#     --env_config /store/real/maxjdu/repos/robotrainer/configs/touchcubes.json --output_folder $output_folder --keep_only_successful \
+#     --camera_names image --video_skip 5 --repeat_environment
+
+# experiment_name=Pymunk_classifier_FROMSCRATCH_100k_noised_ddim
+# CUDA_VISIBLE_DEVICES=6 python train_end_state_classifier.py --exp_dir /store/real/maxjdu/repos/robotrainer/results/classifiers/$experiment_name/ \
+#     --train_hdf5 /store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/pymunk_touch_res128_largercubes_repeated_100ktrain/data.hdf5 \
+#     --test_hdf5 /store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/pymunk_touch_res128_largercubes_repeated_valid/data.hdf5 \
+#     --num_epochs 12000 --action_chunk_length 16 --batch_size 16 --noised
+
+
+### TESTING DYNAMICS
+# experiment_name=Pymunk_classifier_FROMSCRATCH_100k_noised_ddim
+# checkpoint=11900
+# CUDA_VISIBLE_DEVICES=6 python test_end_state_classifier.py --exp_dir /store/real/maxjdu/repos/robotrainer/results/classifiers/$experiment_name/ \
+#     --mixed_hdf5 /store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/pymunk_touch_res128_largercubes_repeated_valid/data.hdf5  \
+#     --checkpoint /store/real/maxjdu/repos/robotrainer/results/classifiers/$experiment_name/$checkpoint.pth  \
+#     --action_chunk_length 16
 

@@ -15,14 +15,19 @@ The experiment code can be found in the main directory here
 - `run_trained_agent.py`: not used often, but this is the default code for evaluating trained base policies
 - `test_dynaguide_embedding.py`: the code that takes a trained dynamics model and runs a suite of tests to ensure that is functional before applying DynaGuide 
 - `train_base_policy.py`: this is the code that trains the base diffusion policy 
-- `train_dynaguide.py`: this is the 
+- `train_dynaguide.py`: this is the code that trains the dynamics model 
+
+Additionally, the diffusion policy in `robomimic/robomimic/algo/diffusion_policy.py` is modified to support guidance. You can modify any DDIM noise prediction diffusion policy to support guidance (see this [section](#workflow-for-applying-dynaguide-to-any-diffusion-policy))
 
 # Installation and Starting
-TODO
-
+1. Install pytorch 
+1. Go to `robomimic/` and run `pip install -e .`
+1. Go to `calvin/` and run `install.sh`
+1. Go to this directory and run `pip install -e .`
+1. Download the calvin datasets and process them according to this [section](#workflow-for-calvin-experiments). Or, for the toy experiments, collect the data according to this [section](#workflow-for-toy-environment-experiment). For your own dataset / diffusion policy, refer to this [section](#workflow-for-applying-dynaguide-to-any-diffusion-policy) for general deployment of DynaGuide. 
 
 # Workflow for Calvin Experiments
-This codebase contains the DynaGuide method, and we test it on the Calvin benchmark environment 
+This codebase contains the DynaGuide method, and we test it on the Calvin benchmark environment. 
 
 ## Generating the Dataset Splits
 You will find the scripts for processing CALVIN data in the `data_processing_calvin` folder. You will run these scripts as follows: 
@@ -48,7 +53,8 @@ The base policy is a diffusion policy implemented in Robomimic. We can use the p
 
 ```
 python split_train_val.py --dataset path_to_calvin_dataset --ratio 0.03
-python train.py --config configs/diffusion_policy_image_calvin_ddim.json --dataset path_to_calvin_dataset --output output_folder  --name run_name
+python train.py --config configs/diffusion_policy_image_calvin_ddim.json \
+    --dataset path_to_calvin_dataset --output output_folder  --name run_name
 ```
 
 **Dynamics Model**
@@ -92,6 +98,16 @@ The DynaGuide experiments in the Calvin environment require an experiment config
 ```
 
 ## Running DynaGuide
+To run DynaGuide, you need 1) the experiment config file 2) trained base policy 3) trained dynamics model and 4) guidance conditions (h5 files). Once you have these components, you can run `run_dynaguide.py` using the following code:
+
+```
+python run_dynaguide.py  --video_path $output_folder/$run_name.mp4 \
+    --dataset_path output_hdf5_path --dataset_obs --json_path output_json_path --horizon 400 --n_rollouts 100 \
+    --agent checkpoint_dir --output_folder output_folder --video_skip 2  \
+    --exp_setup_config exp_config_path --guidance dynamics_model_path \
+    --camera_names third_person --scale 1.5 --ss 4 --alpha 30 --save_frames
+```
+For examples of this evaluation call, look at the shell files in `paper_experiments`. Note that the scale, ss, and alpha can be modified here. 
 
 
 ## Conducting Experiments from Paper
@@ -145,21 +161,83 @@ Finally, fill the experiment name and directory in `analyze_calvin_touch.py` and
 See above instsructions for how to run the experiments seen in the DynaGuide paper. 
 
 # Workflow for Toy Environment Experiment
+The toy square touching experiment is found in `toy_squares_experiment/` and the environment is found in `robomimic/robomimic/envs/env_flat_cube.py`. Unlike the main DynaGuide method, this dynamics model is actually a classifier and it is trained end-to-end with synthetic data. To collect this data, run this code:
+
+```
+run_name=pymunk_touch_res128_largercubes_repeated_100ktrain
+output_folder=output_folder_here
+python collect_scripted_data_pymunk.py --video_path $output_folder/$run_name.mp4 \
+    --dataset_path $output_folder/data.hdf5 --dataset_obs --json_path $output_folder/config.json --horizon 150 --n_rollouts 100000 \
+    --env_config /store/real/maxjdu/repos/robotrainer/configs/touchcubes.json --output_folder $output_folder --keep_only_successful \
+    --camera_names image --video_skip 5 --repeat_environment
+```
+
+Then you can train the dynamics model using this code: 
+
+```
+experiment_name=Pymunk_classifier_FROMSCRATCH_100k_noised_ddim
+CUDA_VISIBLE_DEVICES=6 python train_end_state_classifier.py --exp_dir /store/real/maxjdu/repos/robotrainer/results/classifiers/$experiment_name/ \
+    --train_hdf5 /store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/pymunk_touch_res128_largercubes_repeated_100ktrain/data.hdf5 \
+    --test_hdf5 /store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/pymunk_touch_res128_largercubes_repeated_valid/data.hdf5 \
+    --num_epochs 12000 --action_chunk_length 16 --batch_size 16 --noised
+```
+
+and run tests with this code: 
+
+```
+experiment_name=Pymunk_classifier_FROMSCRATCH_100k_noised_ddim
+checkpoint=11900
+CUDA_VISIBLE_DEVICES=6 python test_end_state_classifier.py --exp_dir /store/real/maxjdu/repos/robotrainer/results/classifiers/$experiment_name/ \
+    --mixed_hdf5 /store/real/maxjdu/repos/robotrainer/dataset/pymunktouch/pymunk_touch_res128_largercubes_repeated_valid/data.hdf5  \
+    --checkpoint /store/real/maxjdu/repos/robotrainer/results/classifiers/$experiment_name/$checkpoint.pth  \
+    --action_chunk_length 16
+```
+
+Finally, you can run an experiment by running code like this: 
+
+```
+CUDA_VISIBLE_DEVICES=5 python classifier_guidance_pymunk.py --video_path output_video_path \
+    --dataset_path output_data_path --dataset_obs --json_path output_json --horizon 400 --n_rollouts 100 \
+    --agent base_policy_path --output_folder output_folder_path --video_skip 1  \
+    --guidance classifier_ckpt_path --scale 0.5 --camera_names image --target_list 1,-0.33,-0.33,-0.33 --render_visuals
+```
+
+The `target_list` allows you to specify which colors to seek and avoid. Positive means seek, and negative means avoid. 
 
 # Workflow for applying DynaGuide to Any Diffusion Policy 
+The code found in `core/` should be general and applicable to any diffusion-based policy. To deploy it on any such policy, you can train the dynamics model using the existing DynaGuide scripts and compute the guidance function using the existing code in `core/dynaguide.py`. To deploy it to any diffusion policy: 
 
-done: 
-dynamics models
-embedder datasets
-image_models 
-train dynaguide 
-test dynaguide embedding
-run dynaguide 
+1. Locate the function that does the inference-time denoising process
+1. Verify that the model is indeed predicting *noise* 
+1. Add this code: 
 
-in progress
-toy experiment 
-baselines 
+```
+scaled_grad = guidance_function(state, naction)
+noise_pred = noise_pred - (1 - noise_scheduler.alphas_cumprod[k]).sqrt() * scaled_grad 
+```
+where `guidance_function` is the function computed by `core/dynaguide.py` and `noise_pred` is the predicted noise outputted by the noise estimation network. Use the noise scheduler of the diffusion policy as `noise_scheduler`. If you use `diffusers.schedulers.scheduling_ddim`, nothing needs to be changed. 
 
-todo: 
-diffusion policy repo 
-calvin repo 
+Add this after the `noise_pred` is updated by the network and *before* the noise scheduler operates. To enable stochastic sampling, simply wrap the denoising step in an inner for-loop. An example is shown here: 
+
+```
+ for ss_iter in range(ss): # stochastic sampling; notice how the "k" doesn't decrease in this loop. 
+    noise_pred = nets['policy']['noise_pred_net'](
+        sample=naction, 
+        timestep=k,
+        global_cond=obs_cond
+    )
+    
+
+    state = inputs["obs"]
+    scaled_grad = guidance_function(state, naction)
+    noise_pred = noise_pred - (1 - self.noise_scheduler.alphas_cumprod[k]).sqrt() * scaled_grad 
+    # inverse diffusion step (remove noise)
+    naction = self.noise_scheduler.step(
+        model_output=noise_pred,
+        timestep=k,
+        sample=naction
+    ).prev_sample # this gives the mu from the paper 
+```
+
+# Feedback
+Are you trying to get DynaGuide working and something's wrong? The numbers don't look right? Send me an email at `maxjdu@stanford.edu` !
