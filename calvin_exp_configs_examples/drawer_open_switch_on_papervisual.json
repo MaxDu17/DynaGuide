@@ -1,0 +1,7 @@
+{
+    "env_setup" : {"drawer": 0, "switch" : 0},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_combined_categories_wcubes/switch_on_drawer_open.hdf5",
+    "neg_examples": null,
+    "reset_poses": null 
+}

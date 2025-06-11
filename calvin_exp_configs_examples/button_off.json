@@ -1,0 +1,11 @@
+{
+    "env_setup" : {"green_light" : 1},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_by_category_wcubes/button_off_20.hdf5",
+    "loc_target": [
+      -0.11221751715334842,
+      -0.11465078614523619,
+      0.4966200809334477
+    ],
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_midpoint.json"
+}

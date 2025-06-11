@@ -1,0 +1,6 @@
+{
+    "env_setup" : {},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_by_category_wcubes/door_left_20.hdf5",
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_right_side_midpoint.json"
+}

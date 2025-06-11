@@ -1,0 +1,6 @@
+{
+    "env_setup" : {"green_light" : 1},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_ood_goals/FILTERED_OOD_Goal_Button_Off.hdf5",
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_midpoint.json"
+}

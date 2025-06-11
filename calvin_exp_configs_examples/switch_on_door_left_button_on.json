@@ -1,0 +1,7 @@
+{
+    "env_setup" : {"green_light": 0, "sliding_door" : 0, "switch": 0},
+    "use_neg" : false, 
+    "neg_examples": null,
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_combined_categories_wcubes/switch_on_button_on_door_left.hdf5",
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_right_side_midpoint.json"
+}

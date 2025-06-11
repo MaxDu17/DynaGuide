@@ -1,0 +1,11 @@
+{
+    "env_setup" : {"switch" : 0},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_by_category_wcubes/switch_on_20.hdf5",
+    "loc_target": [
+        0.27980308053048975,
+        0.023739273400879772,
+        0.5706737502343485
+      ],
+    "reset_poses": "initial_calvin_robot_states_right_side_midpoint.json"
+}

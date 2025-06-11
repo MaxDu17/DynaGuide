@@ -1,0 +1,7 @@
+{
+    "env_setup" : {"green_light": 0, "switch" : 0},
+    "use_neg" : true, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_combined_categories_wcubes/button_on_switch_on.hdf5",
+    "neg_examples": "/yourfolderhere/dataset/CalvinDD_validation_combined_categories_wcubes/neg_examples_button_switch.hdf5",
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_right_side_midpoint.json"
+}

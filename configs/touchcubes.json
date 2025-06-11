@@ -1,0 +1,35 @@
+{
+   "env_meta":{
+      "env_name": "TouchCube",
+      "type": 2,
+      "env_kwargs": {
+      }
+   },
+   "shape_meta" : {
+      "ac_dim": 2,
+      "all_shapes": {
+          "image" :  [3,224,224],
+          "states" : [8],
+          "agent_pos" : [2], 
+          "label" : [1]
+      },
+      "all_obs_keys": [
+          "image",
+          "agent_pos",
+          "states"
+      ],
+      "use_images": true,
+      "use_depths": false
+  },
+  "obs_specs" : {
+      "obs": {
+          "low_dim": [
+                      "agent_pos",
+                      "states"
+          ],
+          "rgb": [
+              "image"
+          ]
+      }
+  }
+}

@@ -1,0 +1,11 @@
+{
+    "env_setup" : {"sliding_door" : 0.28},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_by_category_wcubes/door_right_20.hdf5",
+    "loc_target": [
+        -0.22173902228443118,
+        -0.024977345601772248,
+        0.5462262406195053
+      ],
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_midpoint.json"
+}

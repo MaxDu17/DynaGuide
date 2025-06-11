@@ -1,0 +1,11 @@
+{
+    "env_setup" : {"drawer" : 0},
+    "use_neg" : false, 
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_by_category_wcubes/drawer_open_20.hdf5",
+    "loc_target": [
+        0.1466070830462435,
+        -0.21110382831263355,
+        0.4031764058751014
+      ],
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_right_side_midpoint.json"
+}

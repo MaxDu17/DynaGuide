@@ -1,0 +1,7 @@
+{
+    "env_setup" : {"sliding_door" : 0.28, "drawer" : 0},
+    "use_neg" : true, 
+    "neg_examples": "/yourfolderhere/dataset/CalvinDD_validation_combined_categories_wcubes/door_right_drawer_open.hdf5",
+    "pos_examples": "/yourfolderhere/dataset/CalvinDD_validation_combined_categories_wcubes/neg_examples_door_drawer.hdf5",
+    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_right_side_midpoint.json"
+}
