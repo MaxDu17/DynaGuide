@@ -1,6 +1,0 @@
-{
-    "env_setup" : {"drawer" : 0},
-    "use_neg" : false, 
-    "pos_examples": "/yourfolderhere/dataset/CalvinDD_ood_goals/OOD_Goal_Drawer_Open.hdf5",
-    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_right_side_midpoint.json"
-}

@@ -1,7 +1,20 @@
-# DynaGuide Code
+# DynaGuide: Steering Diffusion Polices with Active Dynamic Guidance
+[Maximilian Du](https://maximiliandu.com/), [Shuran Song](https://shurans.github.io/)
 
-## What is here? 
+arXiv | [Project Website](https://dynaguide.github.io/)
+
 This repository contains the `DynaGuide` implementation code. This includes code to train the dynamics model and use the model during inference-time to steer a diffusion policy. We include example uses of `DynaGuide` as seen in our paper experiments: a toy block environment and the Calvin environment. Finally, we include code snippets that can be added to any diffusion policy codebase to enable `DynaGuide`. 
+
+## Code Release Status
+- 6/16/25: Uploaded all code and example of pretrained dynamics model, base policy, and guidance condition. 
+
+# Installation and Starting
+1. Install pytorch 
+1. Go to `robomimic/` and run `pip install -e .`
+1. Go to `calvin/` and run `install.sh`
+1. Go to this directory and run `pip install -e .`
+1. Download the calvin datasets and process them according to this [section](#workflow-for-calvin-experiments). Or, for the toy experiments, collect the data according to this [section](#workflow-for-toy-environment-experiment). For your own dataset / diffusion policy, refer to this [section](#workflow-for-applying-dynaguide-to-any-diffusion-policy) for general deployment of DynaGuide. 
+
 
 ## Overview: The Important Code
 The core of DynaGuide is found in the `core/` folder in this directory. Experiment configs are found in `configs/` (base policy training) and `calvin_exp_configs_examples/` (DynaGuide evals). Auxiliary data processing scripts are found in `data_processing_calvin/`. See "Generating the Dataset Splits" for instructions on using them. Scripts for getting the paper results are found in `paper_experiments/`, and the toy experiment can be found in `toy_squares_experiment`. Figure generation can be found in `figure_generation/` that takes raw experiment output and creates the figures in the paper. 
@@ -18,13 +31,6 @@ The experiment code can be found in the main directory here
 - `train_dynaguide.py`: this is the code that trains the dynamics model 
 
 Additionally, the diffusion policy in `robomimic/robomimic/algo/diffusion_policy.py` is modified to support guidance. You can modify any DDIM noise prediction diffusion policy to support guidance (see this [section](#workflow-for-applying-dynaguide-to-any-diffusion-policy))
-
-# Installation and Starting
-1. Install pytorch 
-1. Go to `robomimic/` and run `pip install -e .`
-1. Go to `calvin/` and run `install.sh`
-1. Go to this directory and run `pip install -e .`
-1. Download the calvin datasets and process them according to this [section](#workflow-for-calvin-experiments). Or, for the toy experiments, collect the data according to this [section](#workflow-for-toy-environment-experiment). For your own dataset / diffusion policy, refer to this [section](#workflow-for-applying-dynaguide-to-any-diffusion-policy) for general deployment of DynaGuide. 
 
 # Workflow for Calvin Experiments
 This codebase contains the DynaGuide method, and we test it on the Calvin benchmark environment. 
@@ -97,6 +103,12 @@ The DynaGuide experiments in the Calvin environment require an experiment config
 }
 ```
 
+The `env_setup` tells the environment how to configure the articulated elements. This is important for testing the ability for DynaGuide to guide towards one particular behavior. 
+- `green_light` {0, 1} sets the green light to either on or off 
+- `sliding_door` [0, 0.28] sets the sliding door to a position. The base posiion (0) is the door fully right. At 0.28, the door is left. 
+- `drawer` [0, 0.16] sets the drawer to a position. T he base position (0) is the drawer closed. At 0.16, the drawer is open. 
+- `switch` sets the lever switch to a position (and the light is set automatically). The base position (0) is the switch in the off position. At 0.085, the switch is in the on position. 
+
 ## Running DynaGuide
 To run DynaGuide, you need 1) the experiment config file 2) trained base policy 3) trained dynamics model and 4) guidance conditions (h5 files). Once you have these components, you can run `run_dynaguide.py` using the following code:
 
@@ -122,9 +134,9 @@ For your convenience, the scripts used to run the paper experiments are included
 
 ## Calvin DynaGuide: Immediate Example
 
-1. Download the DynaGuide model from this link: 
-1. Download the Base policy from this link: 
-1. Download the Guidance conditions for SWITCH_ON from this link: 
+1. Download the DynaGuide model from this [link](https://drive.google.com/file/d/1lcI_PBgFIYDsoK4T4qO7SGJJgI2lw0Kd/view?usp=drive_link)
+1. Download the Base policy from this [link](https://drive.google.com/file/d/1DeOnoDacXjBHgy1DGoRJpYIR8SyDy5fJ/view?usp=drive_link)
+1. Download the Guidance conditions for SWITCH_ON from this [link](https://drive.google.com/file/d/1wtEGnG87Y-imqD2MygcqbJwp_RGi7YNB/view?usp=drive_link)
 1. Modify the `calvin_exp_configs_examples/switch_on.json` by changing the `pos_examples` file path to the downloaded guidance condition 
 1. Make a folder called `results` in this directory 
 Run the following code: 
@@ -133,7 +145,7 @@ Run the following code:
 run_name=SwitchOnDynaGuide
 output_folder=results/$run_name
 checkpoint_dir=path_to_base_policy
-exp_setup_config=calvin_exp_configs_examples/switch_off.json
+exp_setup_config=calvin_exp_configs_examples/switch_on.json
 embedder=path_to_embedder
 python run_dynaguide.py  --video_path $output_folder/$run_name.mp4 \
     --dataset_path $output_folder/$run_name.hdf5 --dataset_obs --json_path $output_folder/$run_name.json --horizon 400 --n_rollouts 100 \
@@ -239,5 +251,13 @@ Add this after the `noise_pred` is updated by the network and *before* the noise
     ).prev_sample # this gives the mu from the paper 
 ```
 
+# Cite our paper 
+TODO 
+
+
+# Code References 
+We are grateful for the Calvin [benchmark codebase](https://github.com/mees/calvin) duplicated here in this repository with minor modifications. The diffusion policy is adapted from the [Robomimic codebase](https://robomimic.github.io/) also duplicated here with modifications. The dynamics model was inspired by the [Dino-WM implementation](https://dino-wm.github.io/) and leverages visuals representations from [Dino-V2](https://dinov2.metademolab.com/). 
+
 # Feedback
 Are you trying to get DynaGuide working and something's wrong? The numbers don't look right? Send me an email at `maxjdu@stanford.edu` !
+

@@ -1,6 +1,0 @@
-{
-    "env_setup" : {"sliding_door" : 0.28},
-    "use_neg" : false, 
-    "pos_examples": "/yourfolderhere/dataset/CalvinDD_ood_goals/FILTERED_OOD_Goal_Door_Right.hdf5",
-    "reset_poses": "/yourfolderhere/dataset/initial_calvin_robot_states_midpoint.json"
-}
