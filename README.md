@@ -252,8 +252,17 @@ Add this after the `noise_pred` is updated by the network and *before* the noise
 ```
 
 # Cite our paper 
-TODO 
-
+```
+@misc{du2025dynaguidesteeringdiffusionpolices,
+    title={DynaGuide: Steering Diffusion Polices with Active Dynamic Guidance}, 
+    author={Maximilian Du and Shuran Song},
+    year={2025},
+    eprint={2506.13922},
+    archivePrefix={arXiv},
+    primaryClass={cs.RO},
+    url={https://arxiv.org/abs/2506.13922}, 
+}
+```
 
 # Code References 
 We are grateful for the Calvin [benchmark codebase](https://github.com/mees/calvin) duplicated here in this repository with minor modifications. The diffusion policy is adapted from the [Robomimic codebase](https://robomimic.github.io/) also duplicated here with modifications. The dynamics model was inspired by the [Dino-WM implementation](https://dino-wm.github.io/) and leverages visuals representations from [Dino-V2](https://dinov2.metademolab.com/). 
